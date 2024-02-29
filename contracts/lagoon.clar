@@ -3,11 +3,15 @@
 (define-map loans principal { amount: uint, last-interaction-block: uint })
 
 (define-data-var total-deposits uint u0)
-(define-data-var total-loans uint u0)
 (define-data-var pool-reserve uint u0)
 (define-data-var loan-interest-rate uint u10) ;; Representing 10% interest rate
 
+(define-constant err-no-interest (err u100))
+(define-constant err-overpay (err u200))
+(define-constant err-overborrow (err u300))
+
 ;; Users deposit sBTC into the contract
+;; #[allow(unchecked_data)]
 (define-public (deposit (amount uint))
     (let (
         (current-balance (default-to u0 (get amount (map-get? deposits { owner: tx-sender }))))
@@ -26,13 +30,23 @@
         (allowed-borrow (/ user-deposit u2))
         (current-loan-details (default-to { amount: u0, last-interaction-block: u0 } (map-get? loans tx-sender )))
         (accrued-interest (calculate-accrued-interest (get amount current-loan-details) (get last-interaction-block current-loan-details)))
-        (total-due (+ (get amount current-loan-details) (unwrap! accrued-interest (err u8))))
+        (total-due (+ (get amount current-loan-details) (unwrap! accrued-interest err-no-interest)))
         (new-loan (+ total-due amount))
     )
-        (asserts! (<= amount allowed-borrow) (err u7))
+        (asserts! (<= amount allowed-borrow) err-overborrow)
         (try! (contract-call? .sbtc transfer amount (as-contract tx-sender) tx-sender none))
         (map-set loans tx-sender { amount: new-loan, last-interaction-block: block-height })
         (ok true)
+    )
+)
+
+(define-read-only (get-amount-owed)
+    (let (
+        (current-loan-details (default-to { amount: u0, last-interaction-block: u0 } (map-get? loans tx-sender )))
+        (accrued-interest (calculate-accrued-interest (get amount current-loan-details) (get last-interaction-block current-loan-details)))
+        (total-due (+ (get amount current-loan-details) (unwrap! accrued-interest err-no-interest)))
+    )
+    (ok total-due)
     )
 )
 
@@ -41,13 +55,13 @@
 (define-public (repay (amount uint))
     (let (
         (current-loan-details (default-to { amount: u0, last-interaction-block: u0 } (map-get? loans tx-sender )))
-        (accrued-interest (calculate-accrued-interest (get amount current-loan-details) (get last-interaction-block current-loan-details)))
-        (total-due (+ (get amount current-loan-details) (unwrap! accrued-interest (err u8))))
+        (accrued-interest (unwrap! (calculate-accrued-interest (get amount current-loan-details) (get last-interaction-block current-loan-details)) err-no-interest))
+        (total-due (+ (get amount current-loan-details) accrued-interest))
     )
-        (asserts! (>= total-due amount) (err u4))
+        (asserts! (>= total-due amount) err-overpay)
         (try! (contract-call? .sbtc transfer amount tx-sender (as-contract tx-sender) none))
         (map-set loans tx-sender { amount: (- total-due amount), last-interaction-block: block-height })
-        (var-set total-loans (- (var-get total-loans) amount))
+        (var-set pool-reserve (+ (var-get pool-reserve) accrued-interest))
         (ok true)
     )
 )
