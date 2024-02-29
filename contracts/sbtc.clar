@@ -1,3 +1,6 @@
+;; Expicit SIP-010 conformity
+(impl-trait 'SP3FBR2AGK5H9QBDH3EEN6DF8EK8JY7RX8QJ5SVTE.sip-010-trait-ft-standard.sip-010-trait)
+
 ;; title: wrapped BTC on Stacks
 ;; version: 0.1.0
 ;; summary: sBTC dev release asset contract
@@ -46,20 +49,23 @@
     )
 )
 
+;; Note that in production sBTC, this mint function would not be called by useres, it would be called by the sBTC binary in response to a valid deposit by a user
+;; In the production sBTC contract, the following variables would be included and used to verify the Bitcoin transaction that initiated this mint call
+;; (deposit-txid (buff 32))
+;; (burn-chain-height uint)
+;; (merkle-proof (list 14 (buff 32)))
+;; (tx-index uint)
+;; (block-header (buff 80))
 ;; #[allow(unchecked_data)]
 (define-public (mint (amount uint)
     (destination principal)
-    (deposit-txid (buff 32))
-    (burn-chain-height uint)
-    (merkle-proof (list 14 (buff 32)))
-    (tx-index uint)
-    (block-header (buff 80)))
+    )
     (begin
         (try! (is-contract-owner))
-        (try! (verify-txid-exists-on-burn-chain deposit-txid burn-chain-height merkle-proof tx-index block-header))
-        (asserts! (map-insert amounts-by-btc-tx deposit-txid (to-int amount)) err-btc-tx-already-used)
+        ;; (try! (verify-txid-exists-on-burn-chain deposit-txid burn-chain-height merkle-proof tx-index block-header))
+        ;; (asserts! (map-insert amounts-by-btc-tx deposit-txid (to-int amount)) err-btc-tx-already-used)
         (try! (ft-mint? sbtc amount destination))
-        (print {notification: "mint", payload: deposit-txid})
+        (print {notification: "mint"})
         (ok true)
     )
 )
