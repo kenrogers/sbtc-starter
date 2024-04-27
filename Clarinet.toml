@@ -22,6 +22,16 @@ path = 'contracts/sbtc.clar'
 clarity_version = 2
 epoch = 2.4
 
+[contracts.stream]
+path = 'contracts/stream.clar'
+clarity_version = 2
+epoch = 2.4
+
+[contracts.streaming-template]
+path = 'contracts/streaming-template.clar'
+clarity_version = 2
+epoch = 2.4
+
 [repl]
 clarity_wasm_mode = false
 show_timings = false
