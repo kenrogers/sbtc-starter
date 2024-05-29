@@ -119,3 +119,20 @@ If you are interested in building out your own Bitcoin DeFi project, here are so
 - [Hermetica](https://hermetica.fi/)
 - [Bitflow](https://www.bitflow.finance/)
 - [Velar](https://www.velar.co/)
+
+## Payment Streaming Examples
+
+Start a new stream
+`(contract-call? .stream stream-to 'ST1SJ3DTE5DN7X54YDH5D64R3BCB6A2AG2ZQ8YPD5 u100000 {start-block: u5, stop-block: u100} u100)`
+
+`::get_block_height` to see current block height.
+
+`::advance_chain_tip 20` to set new block height.
+
+`(contract-call? .stream balance-of u0 'ST1SJ3DTE5DN7X54YDH5D64R3BCB6A2AG2ZQ8YPD5)` to check balance.
+
+`::set_tx_sender ST1SJ3DTE5DN7X54YDH5D64R3BCB6A2AG2ZQ8YPD5` to set new context.
+
+`(contract-call? 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.stream withdraw u0)` to withdraw
+
+`::get_assets_maps` to check new balance
