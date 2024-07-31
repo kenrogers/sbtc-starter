@@ -1,5 +1,5 @@
 ;; Define the contract's data variables
-(define-map deposits { owner: principal } { amount: uint })
+(define-map deposits principal { amount: uint })
 (define-map loans principal { amount: uint, last-interaction-block: uint })
 
 (define-data-var total-deposits uint u0)
@@ -14,10 +14,10 @@
 ;; #[allow(unchecked_data)]
 (define-public (deposit (amount uint))
     (let (
-        (current-balance (default-to u0 (get amount (map-get? deposits { owner: tx-sender }))))
+        (current-balance (default-to u0 (get amount (map-get? deposits tx-sender ))))
         )
         (try! (contract-call? .sbtc transfer amount tx-sender (as-contract tx-sender) none))
-        (map-set deposits { owner: tx-sender } { amount: (+ current-balance amount) })
+        (map-set deposits tx-sender { amount: (+ current-balance amount) })
         (var-set total-deposits (+ (var-get total-deposits) amount))
         (ok true)
     )
@@ -26,7 +26,7 @@
 ;; Users can borrow sBTC
 (define-public (borrow (amount uint))
     (let (
-        (user-deposit (default-to u0 (get amount (map-get? deposits { owner: tx-sender }))))
+        (user-deposit (default-to u0 (get amount (map-get? deposits tx-sender ))))
         (allowed-borrow (/ user-deposit u2))
         (current-loan-details (default-to { amount: u0, last-interaction-block: u0 } (map-get? loans tx-sender )))
         (accrued-interest (calculate-accrued-interest (get amount current-loan-details) (get last-interaction-block current-loan-details)))
@@ -69,7 +69,7 @@
 ;; Users can claim yield
 (define-public (claim-yield)
     (let (
-        (user-deposit (default-to u0 (get amount (map-get? deposits { owner: tx-sender }))))
+        (user-deposit (default-to u0 (get amount (map-get? deposits tx-sender ))))
         (yield-amount (/ (* (var-get pool-reserve) user-deposit) (var-get total-deposits)))
     )
         (try! (contract-call? .sbtc transfer yield-amount (as-contract tx-sender) tx-sender none))
