@@ -66,7 +66,7 @@ This is an example of a utility function we can use to interact with the mocknet
 
 Now we can deposit as this new user.
 
-`(contract-call? 'ST1SJ3DTE5DN7X54YDH5D64R3BCB6A2AG2ZQ8YPD5.lagoon deposit u1000000)`
+`(contract-call? 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.lagoon deposit u1000000)`
 
 Note that we need to prefix our contract with the deployer principal since we have switched contexts to another principal.
 
